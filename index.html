@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BlackProp App v3</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            /* Палитра Bitget-style */
+            --bg-color: #16171B; 
+            --card-bg: #1E2026; 
+            --primary: #00F0E6; 
+            --primary-hover: #00C4BC;
+            --text-main: #FFFFFF;
+            --text-sec: #76808F;
+            --border: #2B313A;
+            --danger: #F24848;
+            --success: #2EBD85;
+            --purple: #A16EFF; /* Цвет из PDF для 2-й линии */
+            --gold: #FFD700;   /* Цвет для Profit Share */
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        body { background-color: var(--bg-color); color: var(--text-main); font-family: 'Inter', sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+        /* Шапка */
+        .header { padding: 16px; display: flex; align-items: center; background-color: var(--card-bg); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 10; }
+        .back-btn { color: var(--text-main); font-size: 18px; margin-right: 15px; cursor: pointer; display: none; }
+        .header-title { font-weight: 600; font-size: 18px; }
+
+        /* Контейнер */
+        .container { flex: 1; overflow-y: auto; padding: 16px; padding-bottom: 80px; }
+
+        /* Страницы */
+        .page { display: none; animation: fadeIn 0.3s ease; }
+        .page.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Меню (Grid) */
+        .grid-menu { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .menu-card { background-color: var(--card-bg); padding: 20px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; cursor: pointer; border: 1px solid transparent; transition: 0.2s; min-height: 120px; }
+        .menu-card:active { background-color: #262930; transform: scale(0.98); }
+        .menu-icon { font-size: 24px; color: var(--primary); margin-bottom: 10px; background: rgba(0, 240, 230, 0.1); padding: 12px; border-radius: 50%; }
+        .menu-title { font-size: 14px; font-weight: 500; }
+
+        /* Элементы списков */
+        .list-link-item { display: flex; align-items: center; justify-content: space-between; padding: 16px; background: var(--card-bg); border-radius: 12px; margin-bottom: 8px; cursor: pointer; border: 1px solid transparent; }
+        .list-link-item:active { border-color: var(--primary); }
+        .list-content { display: flex; align-items: center; }
+        .list-content i { margin-right: 12px; color: var(--text-sec); font-size: 18px; }
+        .arrow-icon { color: var(--text-sec); font-size: 14px; }
+
+        /* Тарифы */
+        .tariff-card { background: linear-gradient(180deg, var(--card-bg) 0%, rgba(30, 32, 38, 0.5) 100%); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 12px; }
+        .tariff-card.featured { border: 1px solid var(--primary); }
+        .tariff-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .tariff-name { font-size: 16px; font-weight: 700; color: var(--primary); }
+        .tariff-price { font-size: 18px; font-weight: 600; }
+        .tariff-desc { font-size: 12px; color: var(--text-sec); margin-bottom: 15px; }
+
+        /* Кнопки */
+        .btn { width: 100%; padding: 14px; border-radius: 8px; border: none; font-weight: 600; font-size: 14px; cursor: pointer; text-align: center; transition: 0.2s; }
+        .btn-primary { background-color: var(--primary); color: #000; }
+        .btn-primary:active { background-color: var(--primary-hover); }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-main); }
+
+        /* Формы */
+        .form-group { margin-bottom: 15px; }
+        .input-field { width: 100%; background-color: #101114; border: 1px solid var(--border); color: var(--text-main); padding: 14px; border-radius: 8px; font-size: 14px; outline: none; }
+        .input-field:focus { border-color: var(--primary); }
+        .checkbox-group { display: flex; align-items: flex-start; margin-bottom: 12px; }
+        .checkbox-group input { margin-right: 10px; margin-top: 3px; accent-color: var(--primary); min-width: 16px; min-height: 16px; }
+        .checkbox-group label { font-size: 12px; color: var(--text-sec); line-height: 1.4; cursor: pointer; }
+
+        /* Статистика и Прогресс */
+        .stats-row { display: flex; justify-content: space-between; background: var(--card-bg); padding: 16px; border-radius: 12px; margin-bottom: 12px; }
+        .stat-item h4 { font-size: 12px; color: var(--text-sec); margin-bottom: 4px; font-weight: 400; }
+        .stat-item p { font-size: 18px; font-weight: 600; }
+        .progress-container { background: var(--card-bg); padding: 20px; border-radius: 12px; margin-bottom: 12px; }
+        .progress-bar { height: 8px; background-color: #2B313A; border-radius: 4px; margin-top: 10px; overflow: hidden; }
+        .progress-fill { height: 100%; background-color: var(--success); width: 30%; }
+        .referral-box { background: #101114; border: 1px dashed var(--border); padding: 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .code-text { font-family: monospace; font-size: 16px; letter-spacing: 1px; }
+        .copy-icon { color: var(--primary); cursor: pointer; }
+
+        /* Стили для "Как это работает" */
+        .info-section-title { font-size: 18px; font-weight: 700; margin-bottom: 15px; display: flex; align-items: center; }
+        .info-section-title i { color: var(--primary); margin-right: 10px; font-size: 16px; }
+        .timeline-item { display: flex; margin-bottom: 20px; position: relative; }
+        .timeline-line { position: absolute; left: 14px; top: 30px; bottom: -20px; width: 2px; background: var(--border); z-index: 0; }
+        .timeline-item:last-child .timeline-line { display: none; }
+        .timeline-icon { width: 30px; height: 30px; background: var(--card-bg); border: 2px solid var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 1; margin-right: 15px; font-size: 12px; font-weight: bold; color: var(--primary); flex-shrink: 0; }
+        .timeline-content h4 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+        .timeline-content p { font-size: 13px; color: var(--text-sec); line-height: 1.5; }
+        .compare-box { background: var(--card-bg); padding: 16px; border-radius: 12px; margin-bottom: 10px; }
+        .compare-bar { height: 24px; border-radius: 4px; display: flex; align-items: center; padding: 0 10px; font-size: 12px; font-weight: 600; color: #000; margin-top: 8px; }
+        .faq-item { background: var(--card-bg); border-radius: 12px; padding: 16px; margin-bottom: 10px; }
+        .faq-question { font-weight: 600; margin-bottom: 8px; display: flex; justify-content: space-between; }
+        .faq-answer { font-size: 13px; color: var(--text-sec); line-height: 1.5; }
+        .manifesto-box { border: 1px solid var(--border); padding: 15px; border-radius: 12px; margin-top: 20px; background: linear-gradient(90deg, #1E2026 0%, #16171B 100%); }
+        .manifesto-title { color: var(--success); font-size: 14px; font-weight: 700; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        /* НОВЫЕ СТИЛИ ДЛЯ PARTNER TERMS (Ultimate PDF) */
+        .stream-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .stream-card { background: var(--card-bg); padding: 15px; border-radius: 10px; text-align: center; }
+        .stream-val { font-size: 16px; font-weight: 700; display: block; margin-bottom: 4px; }
+        .stream-lbl { font-size: 11px; color: var(--text-sec); }
+        
+        .tier-list { background: var(--card-bg); border-radius: 12px; padding: 0 16px; margin-bottom: 20px; }
+        .tier-item { display: flex; justify-content: space-between; align-items: center; padding: 16px 0; border-bottom: 1px solid var(--border); }
+        .tier-item:last-child { border-bottom: none; }
+        .tier-info h5 { font-size: 14px; font-weight: 600; color: var(--text-main); margin-bottom: 2px; }
+        .tier-info span { font-size: 12px; color: var(--text-sec); }
+        .tier-percent { font-size: 20px; font-weight: 700; color: var(--primary); }
+
+        .bonus-box { background: linear-gradient(90deg, #2a203b 0%, #1E2026 100%); border: 1px solid var(--purple); padding: 16px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        .bonus-title { color: var(--purple); font-weight: 700; font-size: 14px; margin-bottom: 4px; }
+
+        .white-label-section { background: #101114; border: 1px dashed var(--border); padding: 20px; border-radius: 12px; text-align: center; margin-top: 20px; }
+        .wl-badge { background: var(--card-bg); color: var(--text-main); padding: 4px 10px; border-radius: 4px; font-size: 11px; display: inline-block; margin-bottom: 10px; border: 1px solid var(--border); }
+
+        .growth-chart { display: flex; align-items: flex-end; justify-content: space-between; height: 100px; padding-top: 20px; margin-bottom: 10px; }
+        .growth-bar { width: 12%; background: var(--border); border-radius: 4px 4px 0 0; position: relative; }
+        .growth-bar.active { background: linear-gradient(0deg, var(--primary) 0%, rgba(0,240,230,0.3) 100%); }
+
+        .step-hidden { display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="back-btn" onclick="goHome()"><i class="fas fa-arrow-left"></i></div>
+        <div class="header-title" id="page-title">Главное меню</div>
+    </div>
+
+    <div class="container">
+
+        <div id="main-menu" class="page active">
+            <div class="grid-menu">
+                <div class="menu-card" onclick="goTo('connect')">
+                    <div class="menu-icon"><i class="fas fa-plug"></i></div>
+                    <div class="menu-title">Подключиться</div>
+                </div>
+                <div class="menu-card" onclick="goTo('info')">
+                    <div class="menu-icon"><i class="fas fa-rocket"></i></div>
+                    <div class="menu-title">Как это работает</div>
+                </div>
+                <div class="menu-card" onclick="goTo('cabinet')">
+                    <div class="menu-icon"><i class="fas fa-user-shield"></i></div>
+                    <div class="menu-title">Личный кабинет</div>
+                </div>
+                <div class="menu-card" onclick="goTo('partners')">
+                    <div class="menu-icon"><i class="fas fa-handshake"></i></div>
+                    <div class="menu-title">Партнёрство</div>
+                </div>
+                <div class="menu-card" onclick="goTo('about')">
+                    <div class="menu-icon"><i class="fas fa-building"></i></div>
+                    <div class="menu-title">О компании</div>
+                </div>
+                <div class="menu-card" onclick="goTo('support')">
+                    <div class="menu-icon"><i class="fas fa-headset"></i></div>
+                    <div class="menu-title">Поддержка</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="connect" class="page">
+            <h3 style="margin-bottom: 15px; color: var(--text-sec);">Выберите план</h3>
+            <div class="tariff-card">
+                <div class="tariff-header">
+                    <div class="tariff-name">Standard</div>
+                    <div class="tariff-price">35 000 ₽</div>
+                </div>
+                <div class="tariff-desc">Начальный депозит для старта.</div>
+                <button class="btn btn-outline" onclick="openPayment('Standard', '35 000 ₽')">Выбрать</button>
+            </div>
+            <div class="tariff-card featured">
+                <div class="tariff-header">
+                    <div class="tariff-name">Pro</div>
+                    <div class="tariff-price">120 000 ₽</div>
+                </div>
+                <div class="tariff-desc">Оптимальный выбор трейдеров.</div>
+                <button class="btn btn-primary" onclick="openPayment('Pro', '120 000 ₽')">Выбрать</button>
+            </div>
+            <div class="tariff-card">
+                <div class="tariff-header">
+                    <div class="tariff-name">Elite</div>
+                    <div class="tariff-price">335 000 ₽</div>
+                </div>
+                <div class="tariff-desc">Максимальные возможности.</div>
+                <button class="btn btn-outline" onclick="openPayment('Elite', '335 000 ₽')">Выбрать</button>
+            </div>
+            <div style="margin-top: 30px; border-top: 1px solid var(--border); padding-top: 20px;">
+                <h3 style="margin-bottom: 10px;">Индивидуально</h3>
+                <p style="font-size: 12px; color: var(--text-sec); margin-bottom: 10px;">Получите счет до 50,000 USDT</p>
+                <div class="form-group">
+                    <input type="number" class="input-field" placeholder="Впишите желаемый счет">
+                </div>
+                <button class="btn btn-outline" onclick="alert('Переход в чат поддержки...')">Обсудить условия</button>
+            </div>
+        </div>
+
+        <div id="payment-modal" class="page">
+            <h3 id="pay-title" style="margin-bottom: 20px;">Оплата</h3>
+            <div class="checkbox-group">
+                <input type="checkbox" id="offer">
+                <label for="offer">Я принимаю условия Оферты</label>
+            </div>
+            <div class="checkbox-group">
+                <input type="checkbox" id="personal">
+                <label for="personal">Я ознакомлен с Политикой обработки персональных данных</label>
+            </div>
+            <div class="checkbox-group">
+                <input type="checkbox" id="adv">
+                <label for="adv">Я даю согласие на рекламную рассылку</label>
+            </div>
+            <h4 style="margin: 20px 0 10px;">Метод оплаты</h4>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
+                <button class="btn btn-outline" style="border-color: var(--primary);">USDT TRC20</button>
+                <button class="btn btn-outline">Карта РФ</button>
+            </div>
+            <button class="btn btn-primary">Перейти к оплате</button>
+        </div>
+
+        <div id="info" class="page">
+            <div style="text-align: center; margin-bottom: 25px;">
+                <span style="font-size: 12px; color: var(--primary); letter-spacing: 1px; text-transform: uppercase; font-weight: 700;">Official Bitget Broker Partner</span>
+                <h2 style="font-size: 24px; margin-top: 10px; margin-bottom: 5px;">3 шага к капиталу</h2>
+                <p style="color: var(--text-sec); font-size: 14px;">Путь к управлению $600,000</p>
+            </div>
+            <div class="info-section-title"><i class="fas fa-map-signs"></i> Дорожная карта</div>
+            <div style="padding-left: 10px; margin-bottom: 30px;">
+                <div class="timeline-item">
+                    <div class="timeline-line"></div>
+                    <div class="timeline-icon">01</div>
+                    <div class="timeline-content">
+                        <h4>Получи счет</h4>
+                        <p>Доступ к стратегии, базе знаний и капиталу сразу после оформления.</p>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-line"></div>
+                    <div class="timeline-icon">02</div>
+                    <div class="timeline-content">
+                        <h4>Защита AI Sentinel</h4>
+                        <p>Наш алгоритм мониторит вашу биометрию и блокирует тильт ДО потери депозита.</p>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-line"></div>
+                    <div class="timeline-icon">03</div>
+                    <div class="timeline-content">
+                        <h4>Масштаб до $600K</h4>
+                        <p>Показывайте дисциплину, и мы будем удваивать ваш капитал каждые 2 месяца.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="info-section-title"><i class="fas fa-chart-pie"></i> Почему это выгодно?</div>
+            <div class="compare-box">
+                <p style="font-size: 12px; color: var(--text-sec); margin-bottom: 5px;">Ваши вложения (риск ограничен)</p>
+                <div class="compare-bar" style="background: var(--danger); width: 30%;">
+                    $3,750
+                </div>
+                <div style="margin: 10px 0; border-top: 1px dashed var(--border);"></div>
+                <p style="font-size: 12px; color: var(--text-sec); margin-bottom: 5px;">Ваш капитал в BlackProp</p>
+                <div class="compare-bar" style="background: var(--primary); width: 100%;">
+                    $12,500
+                </div>
+                <p style="font-size: 11px; margin-top: 8px; color: var(--text-sec);">
+                    Мы покрываем убытки. Вы получаете в 3.3 раза больше капитала для старта.
+                </p>
+            </div>
+            <div class="manifesto-box">
+                <div class="manifesto-title"><i class="fas fa-shield-alt"></i> Мы не казино</div>
+                <p style="font-size: 13px; line-height: 1.5; color: #ddd;">
+                    Мы образовательно-технологический хаб. Наша цель — создать среду, где трейдер не может слить депозит случайно.
+                </p>
+            </div>
+            <div class="info-section-title" style="margin-top: 30px;"><i class="fas fa-question-circle"></i> Честные ответы</div>
+            <div class="faq-item">
+                <div class="faq-question">Почему платно? <span style="color: var(--primary);">$12.5k</span></div>
+                <div class="faq-answer">Вы рискуете минимумом. Мы рискуем капиталом. Оплата = фильтр серьезности.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">В чем подвох? <span style="color: var(--success);">80%</span></div>
+                <div class="faq-answer">80% прибыли — Вам. Нам невыгодно, если вы теряете. Мы зарабатываем вместе.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">Это демо? <span style="color: var(--text-sec); font-size: 12px;">NO</span></div>
+                <div class="faq-answer">Прямой доступ к ликвидности Bitget (LP). Реальное исполнение.</div>
+            </div>
+            <div style="height: 20px;"></div>
+        </div>
+
+        <div id="cabinet" class="page">
+             <div class="stats-row" style="align-items: center;">
+                <div class="stat-item">
+                    <h4>Текущий статус</h4>
+                </div>
+                <div class="stat-item">
+                    <span style="color: var(--primary); font-size: 14px; background: rgba(0,240,230,0.1); padding: 6px 12px; border-radius: 6px;">Тестирование</span>
+                </div>
+            </div>
+            <div class="progress-container">
+                <div style="display: flex; justify-content: space-between;">
+                    <h4>Прогресс</h4>
+                    <span>3 / 10</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill"></div>
+                </div>
+                <p style="font-size: 12px; color: var(--text-sec); margin-top: 8px;">Этапы прохождения квалификации.</p>
+            </div>
+            <div class="grid-menu" style="margin-top: 10px;">
+                <div class="menu-card" style="min-height: 80px;" onclick="alert('Тест начат')">
+                    <div class="menu-title"><i class="fas fa-play" style="margin-right: 5px;"></i> Начать тест</div>
+                </div>
+                <div class="menu-card" style="min-height: 80px; opacity: 0.5;">
+                    <div class="menu-title"><i class="fas fa-certificate" style="margin-right: 5px;"></i> Сертификат</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="partners" class="page">
+            <div class="stats-row" style="background: linear-gradient(90deg, #1E2026 0%, #162425 100%);">
+                <div class="stat-item">
+                    <h4>Доступно к выводу</h4>
+                    <p style="color: var(--primary);">1,250 USDT</p>
+                </div>
+            </div>
+            <div class="stats-row">
+                <div class="stat-item">
+                    <h4>Всего продано</h4>
+                    <p>15</p>
+                </div>
+                <div class="stat-item" style="text-align: right;">
+                    <h4>Объем продаж</h4>
+                    <p>45,000 USDT</p>
+                </div>
+            </div>
+            <h4 style="margin: 20px 0 10px;">Ваш реферальный код</h4>
+            <div class="referral-box">
+                <span class="code-text">REF-8832-PRO</span>
+                <i class="fas fa-copy copy-icon" onclick="alert('Скопировано!')"></i>
+            </div>
+            <div class="list-link-item" onclick="goTo('partner-terms')">
+                <div class="list-content">
+                    <i class="fas fa-file-signature"></i>
+                    <span>Условия программы</span>
+                </div>
+                <i class="fas fa-chevron-right arrow-icon"></i>
+            </div>
+            <button class="btn btn-primary" style="margin-top: 20px;" onclick="startWithdraw()">Вывести средства</button>
+        </div>
+
+        <div id="partner-terms" class="page">
+            <div style="text-align: center; margin-bottom: 25px;">
+                [cite_start]<h2 style="font-size: 22px; margin-bottom: 5px;">Создай экосистему [cite: 90]</h2>
+                <p style="color: var(--text-sec); font-size: 13px;">4 потока пассивной прибыли</p>
+            </div>
+
+            <div class="stream-grid">
+                <div class="stream-card">
+                    <i class="fas fa-bullhorn" style="color: var(--primary); font-size: 20px; margin-bottom: 8px;"></i>
+                    <span class="stream-val" style="color: var(--primary);">10-30%</span>
+                    [cite_start]<span class="stream-lbl">Direct Sales (CPA) [cite: 103]</span>
+                </div>
+                <div class="stream-card">
+                    <i class="fas fa-network-wired" style="color: var(--purple); font-size: 20px; margin-bottom: 8px;"></i>
+                    <span class="stream-val" style="color: var(--purple);">5%</span>
+                    [cite_start]<span class="stream-lbl">2nd Line [cite: 105]</span>
+                </div>
+                <div class="stream-card">
+                    <i class="fas fa-chart-line" style="color: #fff; font-size: 20px; margin-bottom: 8px;"></i>
+                    <span class="stream-val">% Vol</span>
+                    [cite_start]<span class="stream-lbl">Trading Comms [cite: 108]</span>
+                </div>
+                <div class="stream-card">
+                    <i class="fas fa-coins" style="color: var(--gold); font-size: 20px; margin-bottom: 8px;"></i>
+                    <span class="stream-val" style="color: var(--gold);">1-5%</span>
+                    [cite_start]<span class="stream-lbl">Profit Share [cite: 109]</span>
+                </div>
+            </div>
+
+            [cite_start]<h4 style="margin-bottom: 15px;">Прогрессивная шкала [cite: 140]</h4>
+            <div class="tier-list">
+                <div class="tier-item">
+                    <div class="tier-info">
+                        <h5>Tier 1</h5>
+                        [cite_start]<span>до 500,000 ₽ [cite: 143]</span>
+                    </div>
+                    <div class="tier-percent">10%</div>
+                </div>
+                <div class="tier-item">
+                    <div class="tier-info">
+                        <h5>Tier 2</h5>
+                        [cite_start]<span>500к - 2.5млн ₽ [cite: 146]</span>
+                    </div>
+                    <div class="tier-percent">20%</div>
+                </div>
+                <div class="tier-item">
+                    <div class="tier-info">
+                        <h5>Tier 3</h5>
+                        [cite_start]<span>> 2.5млн ₽ [cite: 148]</span>
+                    </div>
+                    <div class="tier-percent">30%</div>
+                </div>
+            </div>
+
+            <div class="bonus-box">
+                <div>
+                    [cite_start]<div class="bonus-title">NETWORK BONUS [cite: 153]</div>
+                    [cite_start]<div style="font-size: 12px; color: #ddd;">От продаж вашей 2-й линии [cite: 154]</div>
+                </div>
+                <div style="font-size: 24px; font-weight: 700; color: #fff;">5%</div>
+            </div>
+
+            [cite_start]<h4 style="margin-bottom: 10px;">Долгосрочная выгода [cite: 191]</h4>
+            <div class="compare-box" style="padding-bottom: 5px;">
+                <div class="growth-chart">
+                    <div class="growth-bar" style="height: 10%;"></div>
+                    <div class="growth-bar" style="height: 15%;"></div>
+                    <div class="growth-bar" style="height: 20%;"></div>
+                    <div class="growth-bar active" style="height: 30%;"></div>
+                    <div class="growth-bar active" style="height: 45%;"></div>
+                    <div class="growth-bar active" style="height: 70%;"></div>
+                    <div class="growth-bar active" style="height: 100%;"></div>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 10px; color: var(--text-sec); margin-bottom: 10px;">
+                    <span>M1</span>
+                    <span>M6</span>
+                    <span>M12</span>
+                </div>
+                <p style="font-size: 12px; line-height: 1.4; color: #ccc;">
+                    [cite_start]В отличие от обычной биржи, где клиент "сгорает", вы получаете доход постоянно благодаря риск-менеджменту. [cite: 126-129]
+                </p>
+            </div>
+
+            <div class="white-label-section">
+                <span class="wl-badge">Для авторов курсов</span>
+                [cite_start]<h4 style="margin-bottom: 10px;">White Label Solution [cite: 179]</h4>
+                <p style="font-size: 13px; color: var(--text-sec); margin-bottom: 15px;">
+                    Внедрите проп-трейдинг в свое обучение. [cite_start]Конверсия оффера "Курс + Капитал" в 3.5 раза выше. [cite: 209]
+                </p>
+                <button class="btn btn-outline" style="font-size: 12px; padding: 10px;" onclick="alert('Заявка на WL отправлена')">Подключить API</button>
+            </div>
+            
+            <button class="btn btn-primary" style="margin-top: 25px;">Запустить трафик</button>
+            <div style="height: 20px;"></div>
+        </div>
+
+        <div id="withdraw-flow" class="page">
+            <div id="w-step-1">
+                <h3 style="margin-bottom: 20px;">Шаг 1: Сумма</h3>
+                <input type="number" class="input-field" value="1250" style="margin-bottom: 20px;">
+                <button class="btn btn-primary" onclick="nextStep(2)">Далее</button>
+            </div>
+            <div id="w-step-2" class="step-hidden">
+                <h3 style="margin-bottom: 20px;">Шаг 2: Метод</h3>
+                <div class="menu-card" style="min-height: 60px; margin-bottom: 10px; flex-direction: row; justify-content: start;" onclick="nextStep(3)">
+                    <i class="fas fa-coins" style="margin: 0 15px; color: var(--success);"></i> USDT TRC-20
+                </div>
+                <div class="menu-card" style="min-height: 60px; flex-direction: row; justify-content: start;" onclick="nextStep(3)">
+                    <i class="fas fa-university" style="margin: 0 15px; color: var(--text-main);"></i> Банковская карта
+                </div>
+            </div>
+            <div id="w-step-3" class="step-hidden">
+                <h3 style="margin-bottom: 20px;">Шаг 3: Реквизиты</h3>
+                <p style="font-size: 12px; color: var(--text-sec); margin-bottom: 5px;">Адрес кошелька / Номер карты</p>
+                <input type="text" class="input-field" placeholder="..." style="margin-bottom: 20px;">
+                <button class="btn btn-primary" onclick="nextStep(4)">Подтвердить</button>
+            </div>
+            <div id="w-step-4" class="step-hidden" style="text-align: center; padding-top: 40px;">
+                <i class="fas fa-check-circle" style="font-size: 60px; color: var(--success); margin-bottom: 20px;"></i>
+                <h3>Заявка создана</h3>
+                <p style="color: var(--text-sec); margin-bottom: 30px;">Средства поступят в течение 24 часов.</p>
+                <button class="btn btn-outline" onclick="goTo('partners')">Вернуться</button>
+            </div>
+        </div>
+
+        <div id="about" class="page">
+            <h3 style="margin-bottom: 20px;">Документы</h3>
+            <div class="list-link-item"><div class="list-content"><i class="fas fa-file-contract"></i><span>Оферта</span></div><i class="fas fa-chevron-right arrow-icon"></i></div>
+            <div class="list-link-item"><div class="list-content"><i class="fas fa-shield-alt"></i><span>Политика обработки ПД</span></div><i class="fas fa-chevron-right arrow-icon"></i></div>
+            <div class="list-link-item"><div class="list-content"><i class="fas fa-check-double"></i><span>Согласие на обработку ПД</span></div><i class="fas fa-chevron-right arrow-icon"></i></div>
+            <div class="list-link-item"><div class="list-content"><i class="fas fa-briefcase"></i><span>Реквизиты ИП</span></div><i class="fas fa-chevron-right arrow-icon"></i></div>
+            <div style="margin-top: 30px; padding: 20px; background: var(--card-bg); border-radius: 12px;">
+                <h4 style="color: var(--primary);">О нас</h4>
+                <p style="font-size: 13px; color: var(--text-sec); margin-top: 10px; line-height: 1.6;">Мы предоставляем капитал талантливым трейдерам. Создаем экосистему профессионального роста.</p>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Логика навигации
+        const titleEl = document.getElementById('page-title');
+        const backBtn = document.querySelector('.back-btn');
+
+        const titles = {
+            'main-menu': 'Главное меню',
+            'connect': 'Подключение',
+            'cabinet': 'Личный кабинет',
+            'partners': 'Партнёрская программа',
+            'partner-terms': 'Условия программы',
+            'about': 'О компании',
+            'info': 'Как это работает',
+            'payment-modal': 'Оформление',
+            'withdraw-flow': 'Вывод средств'
+        };
+
+        function goTo(pageId) {
+            if (pageId === 'support') {
+                window.open('https://t.me/support_bot', '_blank'); 
+                return;
+            }
+            document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+            const target = document.getElementById(pageId);
+            if (target) {
+                target.classList.add('active');
+                if (pageId === 'main-menu') {
+                    backBtn.style.display = 'none';
+                } else {
+                    backBtn.style.display = 'block';
+                }
+                titleEl.innerText = titles[pageId] || 'Меню';
+                document.querySelector('.container').scrollTop = 0;
+            }
+        }
+
+        function goHome() {
+            goTo('main-menu');
+            resetWithdraw();
+        }
+
+        function openPayment(planName, price) {
+            document.getElementById('pay-title').innerText = `Оплата: ${planName} (${price})`;
+            goTo('payment-modal');
+        }
+
+        function startWithdraw() {
+            goTo('withdraw-flow');
+            nextStep(1);
+        }
+
+        function nextStep(stepNum) {
+            for (let i = 1; i <= 4; i++) {
+                const el = document.getElementById(`w-step-${i}`);
+                if (el) el.classList.add('step-hidden');
+            }
+            document.getElementById(`w-step-${stepNum}`).classList.remove('step-hidden');
+        }
+
+        function resetWithdraw() { }
+    </script>
+</body>
+</html>
